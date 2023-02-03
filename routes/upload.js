@@ -10,13 +10,22 @@ const routes = Router();
 
 routes.get("/", isAuth, async (req, res) => {
   try {
+    const department = req.query.department;
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
-    const uploads = await UploadModel.find()
+    let query = UploadModel.find();
+
+    if (department) {
+      query = query.where({ department });
+    }
+
+    const uploads = await query
       .skip((page - 1) * pageSize)
       .limit(pageSize)
       .exec();
-    const totalDocuments = await UploadModel.countDocuments();
+    const totalDocuments = await UploadModel.countDocuments(
+      department ? { department } : {}
+    );
     const totalPages = Math.ceil(totalDocuments / pageSize);
 
     const nextPage = page + 1 > totalPages ? null : page + 1;
@@ -130,30 +139,49 @@ routes.get("/:id", isAuth, async (req, res) => {
   }
 });
 
+routes.get("/upload/:id/solution", isAuth, async (req, res) => {
+  try {
+    const upload = await UploadModel.findById(req.params.id);
+
+    if (!upload) {
+      return res.status(404).json({ error: "Upload not found." });
+    }
+
+    if (!upload.solved) {
+      return res
+        .status(400)
+        .json({ error: "Solution not found for this upload." });
+    }
+
+    res.set("Content-Type", "application/pdf");
+    res.send(upload.solution);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Sorry, something went wrong :/" });
+  }
+});
+
 routes.post(
   "/",
-  fileUploadMiddleware().single("file"),
+  fileUploadMiddleware().array("file", 10),
   isAuth,
   [
     body("title").isString().isLength({ min: 2 }),
     body("description").isString().isLength({ min: 2 }),
     body("deadline").isDate(),
     body("budget").isString().isLength({ min: 2 }),
-    body("file").isString().isLength({ min: 2 }),
   ],
   async (req, res) => {
     try {
-      if (req.fileValidationError) {
-        return res.status(400).json({ error: req.fileValidationError });
-      } else if (!req.file) {
+      if (!req.files) {
         return res
           .status(400)
-          .json({ error: "Please upload a PDF or DOC file" });
+          .json({ error: "Please upload one or more files" });
       }
 
       const upload = req.body;
       upload.creator = req.id;
-      upload.file = req.file.originalname;
+      upload.file = req.files.map((file) => file.originalname);
       let creator;
 
       const newUpload = await UploadModel.create(upload);
@@ -177,6 +205,30 @@ routes.post(
   }
 );
 
+routes.post("/upload/:id/solution", isAuth, async (req, res) => {
+  try {
+    const upload = await UploadModel.findById(req.params.id);
+
+    if (!upload) {
+      return res.status(404).json({ error: "Upload not found." });
+    }
+
+    if (upload.pickedBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        error: "You are not authorized to post a solution for this upload.",
+      });
+    }
+
+    upload.solution = req.body.solution;
+    await upload.save();
+
+    res.json({ message: "Solution posted successfully." });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Sorry, something went wrong :/" });
+  }
+});
+
 routes.patch("/:id", isAuth, async (req, res) => {
   try {
     const post = await UploadModel.findById(req.params.id).exec();
@@ -196,6 +248,41 @@ routes.patch("/:id", isAuth, async (req, res) => {
       return res.status(404).json({ error: "Upload not found" });
     }
     return res.json(upload);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Sorry, something went wrong :/" });
+  }
+});
+
+routes.patch("/upload/:id/confirm-solution", isAuth, async (req, res) => {
+  try {
+    const upload = await UploadModel.findById(req.params.id);
+
+    if (!upload) {
+      return res.status(404).json({ error: "Upload not found." });
+    }
+
+    if (upload.solved) {
+      return res
+        .status(400)
+        .json({ error: "Solution already confirmed for this upload." });
+    }
+
+    const solver = await UserModel.findById(upload.pickedBy);
+
+    if (!solver) {
+      return res.status(404).json({ error: "Solver not found." });
+    }
+
+    // Confirm the solution and update the upload and solver
+    upload.solved = true;
+
+    solver.wallet += upload.fileAmount * 0.8;
+
+    await upload.save();
+    await solver.save();
+
+    return res.json({ message: "Solution confirmed successfully." });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Sorry, something went wrong :/" });

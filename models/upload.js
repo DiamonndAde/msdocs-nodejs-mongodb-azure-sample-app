@@ -19,14 +19,24 @@ const UploadSchema = new Schema(
       type: Number,
       required: true,
     },
-    file: {
-      type: String,
-      required: true,
-    },
+    file: [
+      {
+        type: String,
+        required: true,
+      },
+    ],
     creator: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+    department: {
+      type: String,
+      required: true,
+    },
+    solved: {
+      type: Boolean,
+      default: false,
     },
     picked: {
       type: Boolean,

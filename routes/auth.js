@@ -164,6 +164,43 @@ routes.post(
   }
 );
 
+routes.post(
+  "/google-login",
+  [body("email").isEmail().withMessage("Invalid email address")],
+  async (req, res) => {
+    const { email } = req.body;
+    try {
+      const user = await UserModel.findOne({ email });
+      if (!user) {
+        return res.status(400).json({ error: "User not found" });
+      }
+
+      // Generate a JWT token
+      const payload = {
+        id: user._id.toString(),
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      };
+
+      jwt.sign(
+        payload,
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" },
+        (err, token) => {
+          if (err) throw err;
+          return res.json({ token, user: payload });
+        }
+      );
+    } catch (error) {
+      console.error(error);
+      return res
+        .status(500)
+        .json({ errors: "Sorry, something went wrong :/", error });
+    }
+  }
+);
+
 routes.post("/logout", isAuth, async (req, res) => {
   try {
     // Get the token from the request headers

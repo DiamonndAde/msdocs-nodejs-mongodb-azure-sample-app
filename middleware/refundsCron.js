@@ -19,6 +19,7 @@ cron.schedule("0 * * * *", async () => {
         refund.status = "success";
         await refund.save();
         user.wallet += refund.amount;
+        user.totalRefunded += refund.amount;
         await user.save();
 
         sendMail(

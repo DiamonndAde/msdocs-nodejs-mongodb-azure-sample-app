@@ -32,6 +32,7 @@ routes.post(
 
       upload.picked = true;
       upload.pickedBy = req.id;
+      user.pickedUploads.push(upload);
       await upload.save();
       sendMail(
         uploader.email,

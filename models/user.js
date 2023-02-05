@@ -51,6 +51,12 @@ const UserSchema = new Schema(
         ref: "Upload",
       },
     ],
+    pickedUploads: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Upload",
+      },
+    ],
     payments: [
       {
         type: Schema.Types.ObjectId,
@@ -63,6 +69,10 @@ const UserSchema = new Schema(
         ref: "Refund",
       },
     ],
+    totalRefunded: {
+      type: Number,
+      default: 0,
+    },
     writingTasks: [
       {
         type: Schema.Types.ObjectId,
@@ -70,6 +80,14 @@ const UserSchema = new Schema(
       },
     ],
     wallet: {
+      type: Number,
+      default: 0,
+    },
+    totalWithdrawn: {
+      type: Number,
+      default: 0,
+    },
+    totalPayments: {
       type: Number,
       default: 0,
     },

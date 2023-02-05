@@ -220,6 +220,7 @@ routes.post("/upload/:id/solution", isAuth, async (req, res) => {
     }
 
     upload.solution = req.body.solution;
+    upload.status = "submitted";
     await upload.save();
 
     res.json({ message: "Solution posted successfully." });
@@ -276,6 +277,7 @@ routes.patch("/upload/:id/confirm-solution", isAuth, async (req, res) => {
 
     // Confirm the solution and update the upload and solver
     upload.solved = true;
+    upload.status = "accepted";
 
     solver.wallet += upload.fileAmount * 0.8;
 
@@ -283,6 +285,40 @@ routes.patch("/upload/:id/confirm-solution", isAuth, async (req, res) => {
     await solver.save();
 
     return res.json({ message: "Solution confirmed successfully." });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Sorry, something went wrong :/" });
+  }
+});
+
+routes.patch("/upload/:id/reject-solution", isAuth, async (req, res) => {
+  try {
+    const upload = await UploadModel.findById(req.params.id);
+
+    if (!upload) {
+      return res.status(404).json({ error: "Upload not found." });
+    }
+
+    if (upload.solved) {
+      return res
+        .status(400)
+        .json({ error: "Solution already confirmed for this upload." });
+    }
+
+    const solver = await UserModel.findById(upload.pickedBy);
+
+    if (!solver) {
+      return res.status(404).json({ error: "Solver not found." });
+    }
+
+    // Reject the solution and update the upload and solver
+    upload.solved = false;
+    upload.status = "rejected";
+
+    await upload.save();
+    await solver.save();
+
+    return res.json({ message: "Solution rejected successfully." });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Sorry, something went wrong :/" });

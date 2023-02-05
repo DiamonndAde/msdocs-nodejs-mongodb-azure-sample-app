@@ -6,12 +6,28 @@ const { isAuth } = require("../middleware/is-auth");
 const { UserModel } = require("../models/user");
 const { sendMail } = require("../middleware/email");
 const { UploadModel } = require("../models/upload");
+const paystackVerification = require("../middleware/paystack-verification");
 const axios = require("axios");
 require("dotenv").config();
 
 const paystack = require("paystack")(process.env.PAYSTACK_SECRET_KEY);
 
 const routes = Router();
+
+routes.get("/", isAuth, async (req, res) => {
+  try {
+    const payments = await PaymentModel.find({ user: req.id })
+      .sort({ createdAt: -1 })
+      .exec();
+    return res.json(payments);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      error: "Sorry, something went wrong :/",
+      message: "Error fetching payments",
+    });
+  }
+});
 
 routes.post(
   "/",
@@ -20,6 +36,7 @@ routes.post(
     body("amount").isNumeric().withMessage("Amount must be a number"),
     body("file").isString().isLength({ min: 2 }),
     body("currency").isString().isLength({ min: 2 }),
+    body("reference").isString().isLength({ min: 2 }),
   ],
   async (req, res) => {
     try {
@@ -38,34 +55,63 @@ routes.post(
 
       const uploader = upload.creator;
 
-      const payment = new PaymentModel(req.body);
-      payment.user = req.id;
+      // Verify the authenticity of the payment using Paystack API
+      const verification = await paystackVerification(req.body.transactionId);
+      if (!verification.status) {
+        return res.status(400).json({ message: "Payment verification failed" });
+      }
+
+      const payment = new PaymentModel({
+        amount: req.body.amount,
+        currency: req.body.currency,
+        transactionId: req.body.reference,
+        paycode: req.body.paycode,
+        file: req.body.file || "wallet",
+        email: user.email,
+        user: req.id,
+        status: req.body.status,
+      });
 
       if (payment.status === "success") {
         await payment.save();
 
-        upload.fileAmount = payment.amount;
-        upload.amountReceived += payment.amount;
+        if (payment.file === "wallet") {
+          user.wallet += payment.amount;
+          user.totalpayments += payment.amount;
+          await user.save();
 
-        user.payments.push(payment);
-        await user.save();
+          sendMail(
+            user.email,
+            "Wallet Topup Successful",
+            `<h1>Your wallet topup of ${payment.amount} was successful.</h1>`
+          );
 
-        uploader.wallet += payment.amount;
-        await uploader.save();
+          return res.json(payment);
+        } else {
+          upload.fileAmount = payment.amount;
+          upload.amountReceived += payment.amount;
 
-        sendMail(
-          user.email,
-          "Payment Successful",
-          `<h1>Your payment of ${payment.amount} was successful.</h1>`
-        );
+          user.payments.push(payment);
+          await user.save();
 
-        sendMail(
-          uploader.email,
-          "Payment Received",
-          `<h1>You received a payment of ${payment.amount} on ${upload.title}, the file ID of ${upload.file}.</h1>`
-        );
+          uploader.wallet += payment.amount;
+          uploader.totalpayments += payment.amount;
+          await uploader.save();
 
-        return res.json(payment);
+          sendMail(
+            user.email,
+            "Payment Successful",
+            `<h1>Your payment of ${payment.amount} was successful.</h1>`
+          );
+
+          sendMail(
+            uploader.email,
+            "Payment Received",
+            `<h1>You received a payment of ${payment.amount} on ${upload.title}, the file ID of ${upload.file}.</h1>`
+          );
+
+          return res.json(payment);
+        }
       } else {
         return res.status(400).json({ message: "Payment failed" });
       }
@@ -116,21 +162,6 @@ routes.post("/verify", isAuth, async (req, res) => {
     return res.status(500).json({
       error: "Sorry, something went wrong :/",
       message: "Error processing payment",
-    });
-  }
-});
-
-routes.get("/", isAuth, async (req, res) => {
-  try {
-    const payments = await PaymentModel.find({ user: req.id })
-      .sort({ createdAt: -1 })
-      .exec();
-    return res.json(payments);
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      error: "Sorry, something went wrong :/",
-      message: "Error fetching payments",
     });
   }
 });

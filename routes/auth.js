@@ -70,6 +70,146 @@ routes.get("/:userId/uploads", isAuth, async (req, res) => {
   }
 });
 
+routes.get("/:userId/picked-uploads", async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const userId = req.params.userId;
+    const user = await UserModel.findById(userId)
+      .populate("pickedUploads")
+      .sort({ createdAt: "desc" })
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .exec();
+    const uploads = user.pickedUploads;
+    const totalDocuments = await UserModel.countDocuments({
+      pickedUploads: { $in: [userId] },
+    });
+    const totalPages = Math.ceil(totalDocuments / pageSize);
+    const nextPage = page + 1 > totalPages ? null : page + 1;
+    const previousPage = page - 1 < 1 ? null : page - 1;
+
+    return res.json({
+      uploads,
+      totalDocuments,
+      totalPages,
+      nextPage,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+      previousPage,
+      pageSize,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Sorry, something went wrong :/" });
+  }
+});
+
+routes.get("/:userId/withdrawals", async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const userId = req.params.userId;
+    const user = UserModel.findById(userId)
+      .populate("withdrawals")
+      .sort({
+        createdAt: "desc",
+      })
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .exec();
+    const withdrawals = user.withdrawals;
+    const totalDocuments = await UserModel.countDocuments({
+      withdrawals: { $in: [userId] },
+    });
+    const totalPages = Math.ceil(totalDocuments / pageSize);
+    const nextPage = page + 1 > totalPages ? null : page + 1;
+    const previousPage = page - 1 < 1 ? null : page - 1;
+
+    return res.json({
+      withdrawals,
+      totalDocuments,
+      totalPages,
+      nextPage,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+      previousPage,
+      pageSize,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Sorry, something went wrong :/" });
+  }
+});
+
+routes.get("/:userId/payments", async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const userId = req.params.userId;
+    const user = UserModel.findById(userId)
+      .populate("payments")
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .exec();
+    const payments = user.payments;
+    const totalDocuments = await UserModel.countDocuments({
+      payments: { $in: [userId] },
+    });
+    const totalPages = Math.ceil(totalDocuments / pageSize);
+    const nextPage = page + 1 > totalPages ? null : page + 1;
+    const previousPage = page - 1 < 1 ? null : page - 1;
+
+    return res.json({
+      payments,
+      totalDocuments,
+      totalPages,
+      nextPage,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+      previousPage,
+      pageSize,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Sorry, something went wrong :/" });
+  }
+});
+
+routes.get("/:userId/refunds", async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const userId = req.params.userId;
+    const user = UserModel.findById(userId)
+      .populate("refunds")
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .exec();
+    const refunds = user.refunds;
+    const totalDocuments = await UserModel.countDocuments({
+      refunds: { $in: [userId] },
+    });
+    const totalPages = Math.ceil(totalDocuments / pageSize);
+    const nextPage = page + 1 > totalPages ? null : page + 1;
+    const previousPage = page - 1 < 1 ? null : page - 1;
+
+    return res.json({
+      refunds,
+      totalDocuments,
+      totalPages,
+      nextPage,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+      previousPage,
+      pageSize,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Sorry, something went wrong :/" });
+  }
+});
+
 routes.post(
   "/signup",
   [

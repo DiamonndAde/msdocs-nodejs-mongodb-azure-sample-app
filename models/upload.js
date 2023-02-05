@@ -34,6 +34,10 @@ const UploadSchema = new Schema(
       type: String,
       required: true,
     },
+    status: {
+      type: String,
+      default: "pending",
+    },
     solved: {
       type: Boolean,
       default: false,

@@ -12,6 +12,25 @@ const paystack = require("paystack")(process.env.PAYSTACK_SECRET_KEY);
 
 const routes = Router();
 
+routes.get("/transfer/:transferCode", isAuth, async (req, res) => {
+  try {
+    const { transferCode } = req.params;
+    const response = await axios.get(
+      `https://api.paystack.co/transfer/${transferCode}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        },
+      }
+    );
+    res.json(response.data);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: error.message, error: error.response.data });
+  }
+});
+
 routes.post("/verify", isAuth, async (req, res) => {
   try {
     const { accountNumber, bankCode } = req.body;
@@ -89,6 +108,7 @@ routes.post("/wallet/withdraw", isAuth, async (req, res) => {
     );
     // Deduct from the wallet
     user.wallet -= amount;
+    user.totalWithdrawn += amount;
     await user.save();
     // Create a withdrawal record
     withdrawal.transferCode = transfer.data.data.transfer_code;
@@ -102,25 +122,6 @@ routes.post("/wallet/withdraw", isAuth, async (req, res) => {
       `You have successfully withdrawn ${amount} from your wallet.`
     );
     res.json({ message: "Withdrawal successful" });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: error.message, error: error.response.data });
-  }
-});
-
-routes.get("/transfer/:transferCode", isAuth, async (req, res) => {
-  try {
-    const { transferCode } = req.params;
-    const response = await axios.get(
-      `https://api.paystack.co/transfer/${transferCode}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-        },
-      }
-    );
-    res.json(response.data);
   } catch (error) {
     res
       .status(500)

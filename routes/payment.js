@@ -6,7 +6,7 @@ const { isAuth } = require("../middleware/is-auth");
 const { UserModel } = require("../models/user");
 const { sendMail } = require("../middleware/email");
 const { UploadModel } = require("../models/upload");
-const paystackVerification = require("../middleware/paystack-verification");
+const paystackVerification = require("../middleware/paystackVerication");
 const axios = require("axios");
 require("dotenv").config();
 

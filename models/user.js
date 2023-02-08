@@ -51,6 +51,12 @@ const UserSchema = new Schema(
         ref: "Upload",
       },
     ],
+    writtingTasks: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "WritingTask",
+      },
+    ],
     pickedUploads: [
       {
         type: Schema.Types.ObjectId,
@@ -73,10 +79,10 @@ const UserSchema = new Schema(
       type: Number,
       default: 0,
     },
-    writingTasks: [
+    writtenTasks: [
       {
         type: Schema.Types.ObjectId,
-        ref: "WritingTask",
+        ref: "WrittenTask",
       },
     ],
     wallet: {

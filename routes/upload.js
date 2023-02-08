@@ -139,7 +139,7 @@ routes.get("/:id", isAuth, async (req, res) => {
   }
 });
 
-routes.get("/upload/:id/solution", isAuth, async (req, res) => {
+routes.get("/:id/solution", isAuth, async (req, res) => {
   try {
     const upload = await UploadModel.findById(req.params.id);
 
@@ -205,7 +205,7 @@ routes.post(
   }
 );
 
-routes.post("/upload/:id/solution", isAuth, async (req, res) => {
+routes.post("/:id/solution", isAuth, async (req, res) => {
   try {
     const upload = await UploadModel.findById(req.params.id);
 
@@ -255,7 +255,7 @@ routes.patch("/:id", isAuth, async (req, res) => {
   }
 });
 
-routes.patch("/upload/:id/confirm-solution", isAuth, async (req, res) => {
+routes.patch("/:id/confirm-solution", isAuth, async (req, res) => {
   try {
     const upload = await UploadModel.findById(req.params.id);
 
@@ -291,7 +291,7 @@ routes.patch("/upload/:id/confirm-solution", isAuth, async (req, res) => {
   }
 });
 
-routes.patch("/upload/:id/reject-solution", isAuth, async (req, res) => {
+routes.patch("/:id/reject-solution", isAuth, async (req, res) => {
   try {
     const upload = await UploadModel.findById(req.params.id);
 

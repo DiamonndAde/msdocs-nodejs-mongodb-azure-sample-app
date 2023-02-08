@@ -7,46 +7,56 @@ const WritingTaskSchema = new Schema(
       type: String,
       required: true,
     },
-    fileId: {
+    description: {
       type: String,
-      required: true,
-    },
-    writingFee: {
-      type: Number,
-      required: true,
-    },
-    budget: {
-      type: Number,
       required: true,
     },
     deadline: {
       type: Date,
       required: true,
     },
-    description: {
-      type: String,
+    budget: {
+      type: Number,
       required: true,
     },
-    transactionId: {
-      type: String,
-      required: true,
-    },
-    pickedBy: {
+    file: [
+      {
+        type: String,
+        required: true,
+      },
+    ],
+    creator: {
       type: Schema.Types.ObjectId,
       ref: "User",
+      required: true,
     },
-    picked: {
-      type: Boolean,
-      default: false,
+    department: {
+      type: String,
+      required: true,
     },
     status: {
       type: String,
       default: "pending",
     },
-    creator: {
+    solved: {
+      type: Boolean,
+      default: false,
+    },
+    picked: {
+      type: Boolean,
+      default: false,
+    },
+    pickedBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+    },
+    amountReceived: {
+      type: Number,
+      default: 0,
+    },
+    fileAmount: {
+      type: Number,
+      default: 0,
     },
   },
   { timestamps: true }

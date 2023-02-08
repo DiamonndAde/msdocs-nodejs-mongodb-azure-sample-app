@@ -3,6 +3,7 @@ const { body } = require("express-validator");
 const { UserModel } = require("../models/user");
 const { UploadModel } = require("../models/upload");
 const { RevokedTokenModel } = require("../models/revokedToken");
+const { ProfileModel } = require("../models/profile");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { isAuth } = require("../middleware/is-auth");
@@ -244,6 +245,22 @@ routes.post(
 
       const salt = await bcrypt.genSalt(10);
       newUser.password = await bcrypt.hash(newUser.password, salt);
+
+      const newProfile = new ProfileModel({
+        user: req.id,
+        contact: {
+          email: req.body.email,
+          phone: req.body.phone,
+        },
+        education: {
+          institution: req.body.institution,
+          department: req.body.department,
+        },
+      });
+
+      await newProfile.save();
+
+      newUser.profile = newProfile;
 
       await newUser.save();
 

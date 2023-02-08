@@ -69,7 +69,7 @@ routes.post(
           phone: req.body.contact.phone,
         },
         education: {
-          school: req.body.education.school,
+          institution: req.body.education.institution,
           dateAttended: req.body.education.dateAttended,
           faculty: req.body.education.faculty,
           department: req.body.education.department,

@@ -29,7 +29,7 @@ const ProfileSchema = new Schema(
     },
     education: {
       type: {
-        school: {
+        institution: {
           type: String,
           required: true,
           default: "",

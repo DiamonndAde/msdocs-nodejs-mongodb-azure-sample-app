@@ -301,6 +301,7 @@ routes.post(
         user: user.user,
         firstName: user.firstName,
         lastName: user.lastName,
+        email: user.email,
       };
 
       jwt.sign(

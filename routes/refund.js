@@ -15,18 +15,18 @@ routes.post(
   [
     body("amount").isNumeric().withMessage("Amount must be a number"),
     body("upload").isString().isLength({ min: 2 }),
-    body("transactionId").isString().isLength({ min: 2 }),
+    body("reference").isString().isLength({ min: 2 }),
     body("email").isEmail().withMessage("Email must be valid email"),
   ],
   async (req, res) => {
     try {
-      const { amount, transactionId, upload, email, description } = req.body;
+      const { amount, reference, upload, email, description } = req.body;
       const user = await UserModel.findById(req.id).exec();
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
       const payment = await PaymentModel.findOne({
-        transactionId,
+        reference,
       }).exec();
       if (!payment || payment.user.toString() !== req.id) {
         return res
@@ -34,7 +34,7 @@ routes.post(
           .json({ error: "Payment not found or not made by the user" });
       }
       const refund = await createRefund(
-        transactionId,
+        reference,
         amount,
         req.id,
         upload,

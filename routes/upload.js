@@ -173,6 +173,11 @@ routes.post(
   ],
   async (req, res) => {
     try {
+      const user = await UserModel.findById(req.id).exec();
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
       if (!req.files) {
         return res
           .status(400)
@@ -185,12 +190,6 @@ routes.post(
       let creator;
 
       const newUpload = await UploadModel.create(upload);
-
-      const user = await UserModel.findById(req.id).exec();
-
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
 
       creator = user;
       user.uploads.push(newUpload);

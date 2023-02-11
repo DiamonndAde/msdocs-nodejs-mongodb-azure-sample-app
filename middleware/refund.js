@@ -3,7 +3,7 @@ const { RefundModel } = require("../models/refund");
 const axios = require("axios");
 
 module.exports.createRefund = async (
-  transactionId,
+  reference,
   amount,
   userId,
   upload,
@@ -19,7 +19,7 @@ module.exports.createRefund = async (
       user,
       upload,
       email,
-      transactionId,
+      reference,
       description,
       amount,
       status: "pending",
@@ -30,7 +30,7 @@ module.exports.createRefund = async (
     await axios.post(
       `https://api.paystack.co/refund`,
       {
-        transaction: transactionId,
+        transaction: reference,
         amount: amount,
       },
       {

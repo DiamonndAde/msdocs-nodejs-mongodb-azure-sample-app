@@ -7,6 +7,21 @@ const UserSchema = new Schema(
       type: String,
       required: true,
     },
+    referralCode: {
+      type: String,
+      unique: true,
+    },
+    referredBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    referralDownLinks: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
     firstName: {
       type: String,
       required: true,

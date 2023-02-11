@@ -1,13 +1,13 @@
 const axios = require("axios");
 
-module.exports.checkRefundStatus = async (transactionId) => {
+module.exports.checkRefundStatus = async (reference) => {
   try {
     const { data } = await axios.get(`https://api.paystack.co/refund`, {
       headers: {
         Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
       },
       params: {
-        transaction: transactionId,
+        transaction: reference,
       },
     });
     return data;

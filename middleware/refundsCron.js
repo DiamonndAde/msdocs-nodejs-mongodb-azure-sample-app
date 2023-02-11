@@ -10,10 +10,10 @@ cron.schedule("0 * * * *", async () => {
     }).populate("user");
     for (const refund of pendingRefunds) {
       const user = refund.user;
-      const transactionId = refund.transactionId;
-      const paystackRefunds = await checkRefundStatus(transactionId);
+      const reference = refund.reference;
+      const paystackRefunds = await checkRefundStatus(reference);
       const paystackRefund = paystackRefunds.find(
-        (r) => r.transaction === transactionId
+        (r) => r.transaction === reference
       );
       if (paystackRefund.status === "success") {
         refund.status = "success";

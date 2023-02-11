@@ -151,7 +151,7 @@ routes.post(
         return res.status(404).json({ error: "User not found" });
       }
       const uploader = upload.creator;
-      const { transactionId, fileId, deadline } = req.body;
+      const { reference, fileId, deadline } = req.body;
       const writtenTask = new WrittenTask({
         fileId,
         title: upload.title,
@@ -159,7 +159,7 @@ routes.post(
         budget: upload.fileAmount,
         writingFee: upload.fileAmount * 0.5,
         deadline,
-        transactionId,
+        reference,
         creator: req.id,
       });
 
@@ -188,9 +188,9 @@ routes.post("/verify-code", isAuth, async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-    const { transactionId } = req.body;
+    const { reference } = req.body;
     const writtenTask = await WrittenTask.findOne({
-      transactionId,
+      reference,
     }).populate("pickedBy");
 
     if (!writtenTask) {
@@ -198,7 +198,7 @@ routes.post("/verify-code", isAuth, async (req, res) => {
     }
 
     const response = await axios.get(
-      `https://api.paystack.co/transaction/verify/${transactionId}`,
+      `https://api.paystack.co/transaction/verify/${reference}`,
       {
         headers: {
           Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
@@ -214,12 +214,12 @@ routes.post("/verify-code", isAuth, async (req, res) => {
       return res.json(response);
     } else {
       WrittenTask.findOneAndUpdate(
-        { paycode: transactionId },
+        { paycode: reference },
         { status: "failed" }
       );
 
       return res.status(400).json({
-        message: "Payment failed or transactionId is wrong",
+        message: "Payment failed or reference is wrong",
         response,
       });
     }

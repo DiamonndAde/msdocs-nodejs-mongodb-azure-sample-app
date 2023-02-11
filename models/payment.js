@@ -15,13 +15,9 @@ const PaymentSchema = new Schema(
     file: {
       type: String,
       required: true,
-      default: "wallet",
     },
-    status: {
-      type: String,
-      required: true,
-    },
-    transactionId: {
+
+    reference: {
       type: String,
       required: true,
     },

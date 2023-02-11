@@ -20,7 +20,7 @@ const RefundSchema = new Schema(
       type: String,
       required: true,
     },
-    transactionId: {
+    reference: {
       type: String,
       required: true,
     },

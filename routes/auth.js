@@ -4,6 +4,7 @@ const { UserModel } = require("../models/user");
 const { UploadModel } = require("../models/upload");
 const { RevokedTokenModel } = require("../models/revokedToken");
 const { ProfileModel } = require("../models/profile");
+const { PaymentModel } = require("../models/payment");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { isAuth } = require("../middleware/is-auth");
@@ -12,6 +13,10 @@ const { sendMail } = require("../middleware/email");
 require("dotenv").config();
 
 const routes = Router();
+
+function generateReferralCode() {
+  return crypto.randomBytes(3).toString("hex");
+}
 
 routes.get("/", async (req, res) => {
   try {
@@ -211,6 +216,26 @@ routes.get("/:userId/refunds", async (req, res) => {
   }
 });
 
+routes.get("/downlink/:id", isAuth, async (req, res) => {
+  try {
+    const user = await UserModel.findById(req.params.id).exec();
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const payments = await PaymentModel.find({ user: req.params.id }).exec();
+    const transactions = payments.length;
+
+    return res.json({ transactions });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      error: "Sorry, something went wrong :/",
+      message: "Error getting transactions",
+    });
+  }
+});
+
 routes.post(
   "/signup",
   [
@@ -222,6 +247,20 @@ routes.post(
     body("department").isString().isLength({ min: 2 }),
     body("phone").isString().isLength({ min: 11 }),
     body("matriculationNumber").isString().isLength({ min: 2 }),
+    body("referralCode")
+      .optional()
+      .isString()
+      .custom(async (value, { req }) => {
+        if (value) {
+          const referralUser = await UserModel.findOne({
+            referralCode: value,
+          }).exec();
+          if (!referralUser) {
+            throw new Error("Invalid referral code");
+          }
+          req.referralUser = referralUser;
+        }
+      }),
   ],
   async (req, res) => {
     try {
@@ -241,7 +280,10 @@ routes.post(
         });
       }
 
-      const newUser = await UserModel.create(user);
+      const newUser = await UserModel.create({
+        ...user,
+        referralCode: generateReferralCode(),
+      });
 
       const salt = await bcrypt.genSalt(10);
       newUser.password = await bcrypt.hash(newUser.password, salt);
@@ -261,6 +303,21 @@ routes.post(
       await newProfile.save();
 
       newUser.profile = newProfile;
+
+      if (req.referralUser) {
+        const referralUser = await UserModel.findOne({
+          referralCode: req.referralUser,
+        }).exec();
+
+        if (!referralUser) {
+          return res
+            .status(400)
+            .json({ error: "Referral code not found or invalid" });
+        }
+        user.referredBy = referralUser._id;
+        referralUser.referralDownlinks.push(newUser._id);
+        await referralUser.save();
+      }
 
       await newUser.save();
 

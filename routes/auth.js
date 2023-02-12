@@ -216,6 +216,45 @@ routes.get("/:userId/refunds", async (req, res) => {
   }
 });
 
+routes.get("/my-uploads", isAuth, async (req, res) => {
+  try {
+    const user = await UserModel.findById(req.id).exec();
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const uploads = await UploadModel.find({
+      creator: req.id,
+    })
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .exec();
+    const totalDocuments = await UploadModel.countDocuments({
+      creator: req.id,
+    });
+    const totalPages = Math.ceil(totalDocuments / pageSize);
+
+    const nextPage = page + 1 > totalPages ? null : page + 1;
+    const previousPage = page - 1 < 1 ? null : page - 1;
+
+    res.json({
+      uploads,
+      totalPages,
+      currentPage: page,
+      nextPage,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+      previousPage,
+      pageSize,
+      totalDocuments,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Sorry, something went wrong :/" });
+  }
+});
+
 routes.get("/downlink/:id", isAuth, async (req, res) => {
   try {
     const user = await UserModel.findById(req.params.id).exec();

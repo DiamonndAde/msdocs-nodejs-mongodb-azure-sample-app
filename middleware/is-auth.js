@@ -5,7 +5,7 @@ const secret = process.env.JWT_SECRET;
 
 // The isAuth middleware function
 module.exports.isAuth = async (req, res, next) => {
-  const authHeader = req.get("Authorization");
+  const authHeader = req.get("Middleware-Authorization");
   if (!authHeader) {
     res.status(401).json({ message: "Not authenticated." });
     return;

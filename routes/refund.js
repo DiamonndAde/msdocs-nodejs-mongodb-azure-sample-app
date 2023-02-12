@@ -9,6 +9,23 @@ const { createRefund } = require("../middleware/refund");
 
 const routes = Router();
 
+routes.get("/", isAuth, async (req, res) => {
+  try {
+    const user = await UserModel.findById(req.id).exec();
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    const refunds = await RefundModel.find({ user: req.id }).exec();
+    return res.json(refunds);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      error: "Sorry, something went wrong :/",
+      message: "Error getting refunds",
+    });
+  }
+});
+
 routes.post(
   "/",
   isAuth,
@@ -51,22 +68,5 @@ routes.post(
     }
   }
 );
-
-routes.get("/", isAuth, async (req, res) => {
-  try {
-    const user = await UserModel.findById(req.id).exec();
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-    const refunds = await RefundModel.find({ user: req.id }).exec();
-    return res.json(refunds);
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      error: "Sorry, something went wrong :/",
-      message: "Error getting refunds",
-    });
-  }
-});
 
 module.exports = routes;

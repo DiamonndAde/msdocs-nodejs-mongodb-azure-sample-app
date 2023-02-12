@@ -10,7 +10,6 @@ const ProfileSchema = new Schema(
     },
     about: {
       type: String,
-      required: true,
       default: "",
     },
     contact: {
@@ -31,29 +30,24 @@ const ProfileSchema = new Schema(
       type: {
         institution: {
           type: String,
-          required: true,
           default: "",
         },
         dateAttended: {
           type: String,
-          required: true,
           default: "",
         },
         Faculty: {
           type: String,
-          required: true,
           default: "",
         },
         department: {
           type: String,
-          required: true,
           default: "",
         },
       },
     },
     skills: {
       type: [String],
-      required: true,
       default: [],
     },
   },

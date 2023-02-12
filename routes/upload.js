@@ -165,7 +165,7 @@ routes.post(
   }
 );
 
-routes.post("/:id/solution", isAuth, async (req, res) => {
+routes.patch("/:id/solution", isAuth, async (req, res) => {
   try {
     const upload = await UploadModel.findById(req.params.id);
 

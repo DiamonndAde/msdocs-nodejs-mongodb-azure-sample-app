@@ -25,6 +25,12 @@ const UploadSchema = new Schema(
         required: true,
       },
     ],
+    solution: [
+      {
+        type: String,
+        required: true,
+      },
+    ],
     creator: {
       type: Schema.Types.ObjectId,
       ref: "User",

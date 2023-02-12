@@ -165,30 +165,41 @@ routes.post(
   }
 );
 
-routes.patch("/:id/solution", isAuth, async (req, res) => {
-  try {
-    const upload = await UploadModel.findById(req.params.id);
+routes.patch(
+  "/:id/solution",
+  fileUploadMiddleware().array("file", 10),
+  isAuth,
+  async (req, res) => {
+    try {
+      const upload = await UploadModel.findById(req.params.id);
 
-    if (!upload) {
-      return res.status(404).json({ error: "Upload not found." });
+      if (!upload) {
+        return res.status(404).json({ error: "Upload not found." });
+      }
+
+      if (upload.pickedBy.toString() !== req.user._id.toString()) {
+        return res.status(403).json({
+          error: "You are not authorized to post a solution for this upload.",
+        });
+      }
+
+      if (!req.files) {
+        return res
+          .status(400)
+          .json({ error: "Please upload one or more files" });
+      }
+
+      upload.solution = req.files.map((file) => file.originalname);
+      upload.status = "submitted";
+      await upload.save();
+
+      res.json({ message: "Solution posted successfully." });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Sorry, something went wrong :/" });
     }
-
-    if (upload.pickedBy.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        error: "You are not authorized to post a solution for this upload.",
-      });
-    }
-
-    upload.solution = req.body.solution;
-    upload.status = "submitted";
-    await upload.save();
-
-    res.json({ message: "Solution posted successfully." });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Sorry, something went wrong :/" });
   }
-});
+);
 
 routes.patch("/:id", isAuth, async (req, res) => {
   try {

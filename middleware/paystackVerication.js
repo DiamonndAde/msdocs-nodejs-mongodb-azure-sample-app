@@ -13,7 +13,7 @@ async function paystackVerification(reference) {
 
     const { data } = response;
 
-    if (data.status) {
+    if ((data.status = "success")) {
       return data;
     } else {
       throw new Error("Transaction verification failed");

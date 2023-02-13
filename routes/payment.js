@@ -140,6 +140,7 @@ routes.post(
         return res.status(500).json({
           error: "Payment verification failed",
           message: error.message,
+          errors: error,
         });
       }
 

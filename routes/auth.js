@@ -398,6 +398,7 @@ routes.post(
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
+        department: user.department,
       };
 
       jwt.sign(

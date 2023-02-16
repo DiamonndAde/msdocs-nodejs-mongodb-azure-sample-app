@@ -188,6 +188,7 @@ routes.post(
       return res.status(500).json({
         error: "Sorry, something went wrong :/",
         message: "Error processing payment",
+        errors: error
       });
     }
   }

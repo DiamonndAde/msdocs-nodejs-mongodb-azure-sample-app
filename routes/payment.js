@@ -172,7 +172,7 @@ routes.post(
       });
       await payment.save();
 
-      user.totalpayments += payment.amount;
+      user.totalPayments += payment.amount;
       user.payments.push(payment);
       await user.save();
 
@@ -188,7 +188,7 @@ routes.post(
       return res.status(500).json({
         error: "Sorry, something went wrong :/",
         message: "Error processing payment",
-        errors: error
+        errors: error,
       });
     }
   }

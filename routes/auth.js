@@ -327,22 +327,6 @@ routes.post(
       const salt = await bcrypt.genSalt(10);
       newUser.password = await bcrypt.hash(newUser.password, salt);
 
-      const newProfile = new ProfileModel({
-        user: newUser._id,
-        contact: {
-          email: req.body.email,
-          phone: req.body.phone,
-        },
-        education: {
-          institution: req.body.institution,
-          department: req.body.department,
-        },
-      });
-
-      await newProfile.save();
-
-      newUser.profile = newProfile;
-
       if (req.referralUser) {
         const referralUser = await UserModel.findOne({
           referralCode: req.referralUser,
@@ -359,6 +343,19 @@ routes.post(
       }
 
       await newUser.save();
+
+      newUser.profile = new ProfileModel({
+        user: newUser._id,
+        contact: {
+          email: req.body.email,
+          phone: req.body.phone,
+        },
+        education: {
+          institution: req.body.institution,
+          department: req.body.department,
+        },
+      });
+      await newUser.profile.save();
 
       return res.status(201).json(newUser);
     } catch (error) {

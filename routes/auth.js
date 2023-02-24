@@ -328,7 +328,7 @@ routes.post(
       newUser.password = await bcrypt.hash(newUser.password, salt);
 
       const newProfile = new ProfileModel({
-        user: req.id,
+        user: newUser._id,
         contact: {
           email: req.body.email,
           phone: req.body.phone,

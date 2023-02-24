@@ -319,14 +319,6 @@ routes.post(
         });
       }
 
-      const newUser = await UserModel.create({
-        ...user,
-        referralCode: generateReferralCode(),
-      });
-
-      const salt = await bcrypt.genSalt(10);
-      newUser.password = await bcrypt.hash(newUser.password, salt);
-
       if (req.referralUser) {
         const referralUser = await UserModel.findOne({
           referralCode: req.referralUser,
@@ -341,6 +333,14 @@ routes.post(
         referralUser.referralDownlinks.push(newUser._id);
         await referralUser.save();
       }
+
+      const newUser = await UserModel.create({
+        ...user,
+        referralCode: generateReferralCode(),
+      });
+
+      const salt = await bcrypt.genSalt(10);
+      newUser.password = await bcrypt.hash(newUser.password, salt);
 
       await newUser.save();
 

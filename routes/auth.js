@@ -358,11 +358,11 @@ routes.post(
       await newUser.profile.save();
 
       return res.status(201).json(newUser);
-    } catch (error) {
-      console.error(error);
+    } catch (errors) {
+      console.error(errors);
       return res
         .status(500)
-        .json({ errors: "Sorry, something went wrong :/", error });
+        .json({ error: "Sorry, something went wrong :/", errors });
     }
   }
 );

@@ -83,13 +83,11 @@ routes.get("/:userId/picked-uploads", async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
     const userId = req.params.userId;
-    const user = await UserModel.findById(userId)
-      .populate("pickedUploads")
+    const uploads = await UploadModel.find({ pickedBy: userId })
       .sort({ createdAt: "desc" })
       .skip((page - 1) * pageSize)
       .limit(pageSize)
       .exec();
-    const uploads = user.pickedUploads;
     const totalDocuments = await UploadModel.countDocuments({
       pickedBy: userId,
     });
@@ -154,15 +152,11 @@ routes.get("/:userId/withdrawals", async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
     const userId = req.params.userId;
-    const user = UserModel.findById(userId)
-      .populate("withdrawals")
-      .sort({
-        createdAt: "desc",
-      })
+    const withdrawals = await WithdrawalModel.find({ user: userId })
+      .sort({ createdAt: "desc" })
       .skip((page - 1) * pageSize)
       .limit(pageSize)
       .exec();
-    const withdrawals = user.withdrawals;
     const totalDocuments = await WithdrawalModel.countDocuments({
       user: userId,
     });
@@ -191,12 +185,11 @@ routes.get("/:userId/payments", async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
     const userId = req.params.userId;
-    const user = UserModel.findById(userId)
-      .populate("payments")
+    const payments = await PaymentModel.find({ user: userId })
+      .sort({ createdAt: "desc" })
       .skip((page - 1) * pageSize)
       .limit(pageSize)
       .exec();
-    const payments = user.payments;
     const totalDocuments = await PaymentModel.countDocuments({
       user: userId,
     });
@@ -225,12 +218,11 @@ routes.get("/:userId/refunds", async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
     const userId = req.params.userId;
-    const user = UserModel.findById(userId)
-      .populate("refunds")
+    const refunds = await RefundModel.find({ user: userId })
+      .sort({ createdAt: "desc" })
       .skip((page - 1) * pageSize)
       .limit(pageSize)
       .exec();
-    const refunds = user.refunds;
     const totalDocuments = await RefundModel.countDocuments({
       user: userId,
     });

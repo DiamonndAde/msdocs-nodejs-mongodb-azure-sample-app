@@ -5,6 +5,8 @@ const { UploadModel } = require("../models/upload");
 const { RevokedTokenModel } = require("../models/revokedToken");
 const { ProfileModel } = require("../models/profile");
 const { PaymentModel } = require("../models/payment");
+const { WithdrawalModel } = require("../models/withdrawal");
+const { RefundModel } = require("../models/refund");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { isAuth } = require("../middleware/is-auth");
@@ -88,8 +90,44 @@ routes.get("/:userId/picked-uploads", async (req, res) => {
       .limit(pageSize)
       .exec();
     const uploads = user.pickedUploads;
-    const totalDocuments = await UserModel.countDocuments({
-      pickedUploads: { $in: [userId] },
+    const totalDocuments = await UploadModel.countDocuments({
+      pickedBy: userId,
+    });
+    const totalPages = Math.ceil(totalDocuments / pageSize);
+    const nextPage = page + 1 > totalPages ? null : page + 1;
+    const previousPage = page - 1 < 1 ? null : page - 1;
+
+    return res.json({
+      uploads,
+      totalDocuments,
+      totalPages,
+      nextPage,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+      previousPage,
+      pageSize,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Sorry, something went wrong :/" });
+  }
+});
+
+routes.get("/:userId/creator-picked-uploads", async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const userId = req.params.userId;
+    const uploads = await UploadModel.find({
+      creator: userId,
+      picked: true,
+    })
+      .sort({ createdAt: "desc" })
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .exec();
+    const totalDocuments = await UploadModel.countDocuments({
+      creator: userId,
     });
     const totalPages = Math.ceil(totalDocuments / pageSize);
     const nextPage = page + 1 > totalPages ? null : page + 1;
@@ -125,8 +163,8 @@ routes.get("/:userId/withdrawals", async (req, res) => {
       .limit(pageSize)
       .exec();
     const withdrawals = user.withdrawals;
-    const totalDocuments = await UserModel.countDocuments({
-      withdrawals: { $in: [userId] },
+    const totalDocuments = await WithdrawalModel.countDocuments({
+      user: userId,
     });
     const totalPages = Math.ceil(totalDocuments / pageSize);
     const nextPage = page + 1 > totalPages ? null : page + 1;
@@ -159,8 +197,8 @@ routes.get("/:userId/payments", async (req, res) => {
       .limit(pageSize)
       .exec();
     const payments = user.payments;
-    const totalDocuments = await UserModel.countDocuments({
-      payments: { $in: [userId] },
+    const totalDocuments = await PaymentModel.countDocuments({
+      user: userId,
     });
     const totalPages = Math.ceil(totalDocuments / pageSize);
     const nextPage = page + 1 > totalPages ? null : page + 1;
@@ -193,8 +231,8 @@ routes.get("/:userId/refunds", async (req, res) => {
       .limit(pageSize)
       .exec();
     const refunds = user.refunds;
-    const totalDocuments = await UserModel.countDocuments({
-      refunds: { $in: [userId] },
+    const totalDocuments = await RefundModel.countDocuments({
+      user: userId,
     });
     const totalPages = Math.ceil(totalDocuments / pageSize);
     const nextPage = page + 1 > totalPages ? null : page + 1;

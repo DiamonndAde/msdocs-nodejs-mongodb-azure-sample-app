@@ -7,7 +7,7 @@ const { body } = require("express-validator");
 
 const routes = Router();
 
-routes.post(
+routes.patch(
   "/",
   isAuth,
   [body("id").isString().isLength({ min: 2 })],

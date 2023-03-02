@@ -60,6 +60,10 @@ const UserSchema = new Schema(
       ref: "Profile",
       default: null,
     },
+    recipientId: {
+      type: String,
+      default: null,
+    },
     uploads: [
       {
         type: Schema.Types.ObjectId,

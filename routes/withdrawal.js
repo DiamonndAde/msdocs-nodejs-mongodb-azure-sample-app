@@ -71,6 +71,9 @@ routes.post("/recipient", isAuth, async (req, res) => {
         },
       }
     );
+    const user = await UserModel.findById(req.id);
+    user.recipientId = response.data.data.recipient_code;
+    await user.save();
     res.json(response.data);
   } catch (error) {
     res.status(500).json({ message: error.message });

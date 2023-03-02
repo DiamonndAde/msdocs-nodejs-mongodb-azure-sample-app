@@ -6,6 +6,7 @@ const { isAuth } = require("../middleware/is-auth");
 const { UserModel } = require("../models/user");
 const fileUploadMiddleware = require("../middleware/multer");
 const fs = require("fs");
+const path = require("path");
 const archiver = require("archiver");
 
 const routes = Router();
@@ -138,7 +139,8 @@ routes.get("/download/:id", async (req, res) => {
     });
     const fileCount = upload.file.length;
     for (let i = 0; i < fileCount; i++) {
-      const filePath = upload.file[i];
+      const fileName = upload.file[i];
+      const filePath = path.join(__dirname, "..", "uploads", fileName);
       if (fs.existsSync(filePath)) {
         archive.file(filePath, { name: `${i + 1}.pdf` });
       } else {

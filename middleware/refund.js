@@ -43,6 +43,10 @@ module.exports.createRefund = async (
     return refund;
   } catch (error) {
     console.error(error);
-    throw new Error("Error creating refund");
+    const errorMessage =
+      error.response && error.response.data && error.response.data.message
+        ? error.response.data.message
+        : "Error creating refund";
+    throw new Error(errorMessage);
   }
 };

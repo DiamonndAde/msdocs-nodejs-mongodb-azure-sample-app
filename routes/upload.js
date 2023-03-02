@@ -150,7 +150,7 @@ routes.get("/download/:id", async (req, res) => {
     archive.pipe(res);
   } catch (error) {
     console.error(error);
-    res.status(500).send("Internal Server Error");
+    res.status(500).send(error.message);
   }
 });
 

@@ -12,10 +12,8 @@ cron.schedule("0 * * * *", async () => {
       const user = refund.user;
       const reference = refund.reference;
       const paystackRefunds = await checkRefundStatus(reference);
-      const paystackRefund = paystackRefunds.find(
-        (r) => r.transaction === reference
-      );
-      if (paystackRefund.status === "success") {
+      const refundData = paystackRefunds.data;
+      if (refundData.status === "processed") {
         refund.status = "success";
         await refund.save();
         user.wallet += refund.amount;

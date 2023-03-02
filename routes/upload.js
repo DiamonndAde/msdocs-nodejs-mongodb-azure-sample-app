@@ -5,6 +5,7 @@ const { UploadModel } = require("../models/upload");
 const { isAuth } = require("../middleware/is-auth");
 const { UserModel } = require("../models/user");
 const fileUploadMiddleware = require("../middleware/multer");
+const fs = require("fs");
 const archiver = require("archiver");
 
 const routes = Router();

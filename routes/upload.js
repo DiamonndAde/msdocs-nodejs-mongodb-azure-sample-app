@@ -5,6 +5,7 @@ const { UploadModel } = require("../models/upload");
 const { isAuth } = require("../middleware/is-auth");
 const { UserModel } = require("../models/user");
 const fileUploadMiddleware = require("../middleware/multer");
+const archiver = require("archiver");
 
 const routes = Router();
 
@@ -119,6 +120,36 @@ routes.get("/:id/solution", isAuth, async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Sorry, something went wrong :/" });
+  }
+});
+
+routes.get("/download/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const upload = await UploadModel.findById(id);
+    if (!upload) {
+      return res.status(404).send("File not found");
+    }
+    const archive = archiver("zip");
+    archive.on("error", (err) => {
+      console.error(err);
+      res.status(500).send("Internal Server Error");
+    });
+    const fileCount = upload.file.length;
+    for (let i = 0; i < fileCount; i++) {
+      const filePath = upload.file[i];
+      if (fs.existsSync(filePath)) {
+        archive.file(filePath, { name: `${i + 1}.pdf` });
+      } else {
+        console.warn(`File not found: ${filePath}`);
+      }
+    }
+    archive.finalize();
+    res.attachment(`files.zip`);
+    archive.pipe(res);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Internal Server Error");
   }
 });
 

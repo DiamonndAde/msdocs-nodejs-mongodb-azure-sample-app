@@ -25,7 +25,7 @@ cron.schedule("0 * * * *", async () => {
           "Refund Successful",
           `<h1>Your refund of ${refund.amount} was successful.</h1>`
         );
-      } else if (paystackRefund.status === "failed") {
+      } else if (refundData.status === "failed") {
         refund.status = "failed";
         await refund.save();
       }

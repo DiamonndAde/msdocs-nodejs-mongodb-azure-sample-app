@@ -6,6 +6,7 @@ var mongoose = require("mongoose");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
+const cors = require("cors");
 const { format } = require("date-fns");
 const clientRoutes = require("./routes/auth");
 const uploadRoutes = require("./routes/upload");
@@ -40,10 +41,17 @@ async function getApp() {
   app.use(cookieParser());
   app.use(express.static(path.join(__dirname, "public")));
 
+  app.use(
+    cors({
+      origin: ["http://localhost:3000", "http://www.solutionners.com/"],
+      credentials: true,
+    })
+  );
+
   app.locals.format = format;
 
   app.get("/", async (req, res) => {
-    res.json({ message: "Please visit /api/v1/user to view all the users" });
+    res.json({ message: "Please visit /users to view all the users" });
   });
   app.use("/js", express.static(__dirname + "/node_modules/bootstrap/dist/js")); // redirect bootstrap JS
   app.use(

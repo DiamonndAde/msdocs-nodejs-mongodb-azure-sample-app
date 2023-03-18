@@ -17,6 +17,7 @@ const account = require("./routes/withdrawal");
 const profile = require("./routes/profile");
 const writtenTask = require("./routes/writtenTask");
 const writingTask = require("./routes/writingTask");
+const banks = require("./routes/bank");
 
 // 1st party dependencies
 var configData = require("./config/connection");
@@ -68,6 +69,7 @@ async function getApp() {
   app.use("/profile", profile);
   app.use("/written-task", writtenTask);
   app.use("/writing-task", writingTask);
+  app.use("/banks", banks);
 
   // catch 404 and forward to error handler
   app.use(function (req, res, next) {

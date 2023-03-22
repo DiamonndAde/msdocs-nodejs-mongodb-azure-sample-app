@@ -2,6 +2,7 @@ const express = require("express");
 const { Router } = express;
 const { body } = require("express-validator");
 const { UploadModel } = require("../models/upload");
+const { WritingTask } = require("../models/writingTask");
 const { WrittenTask } = require("../models/writtenTask");
 const { isAuth } = require("../middleware/is-auth");
 const { UserModel } = require("../models/user");

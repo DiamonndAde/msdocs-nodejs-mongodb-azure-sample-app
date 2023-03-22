@@ -43,6 +43,10 @@ const UserSchema = new Schema(
       type: String,
       required: true,
     },
+    recipientId: {
+      type: String,
+      default: null,
+    },
     department: {
       type: String,
       required: true,

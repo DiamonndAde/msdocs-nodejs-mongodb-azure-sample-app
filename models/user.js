@@ -43,9 +43,23 @@ const UserSchema = new Schema(
       type: String,
       required: true,
     },
-    recipientId: {
-      type: String,
-      default: null,
+    recipient: {
+      type: {
+        type: String,
+        required: true,
+      },
+      name: {
+        type: String,
+        required: true,
+      },
+      accountNumber: {
+        type: String,
+        required: true,
+      },
+      bankCode: {
+        type: String,
+        required: true,
+      },
     },
     department: {
       type: String,

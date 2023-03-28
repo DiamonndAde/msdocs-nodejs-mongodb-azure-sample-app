@@ -72,7 +72,12 @@ routes.post("/recipient", isAuth, async (req, res) => {
       }
     );
     const user = await UserModel.findById(req.id);
-    user.recipientId = response.data.data.recipient_code;
+    user.recipient = {
+      type,
+      name,
+      accountNumber,
+      bankCode,
+    };
     await user.save();
     res.json(response.data);
   } catch (error) {

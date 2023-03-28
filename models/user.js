@@ -61,6 +61,10 @@ const UserSchema = new Schema(
         required: true,
       },
     },
+    recipientCode: {
+      type: String,
+      default: null,
+    },
     department: {
       type: String,
       required: true,

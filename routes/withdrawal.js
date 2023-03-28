@@ -78,6 +78,7 @@ routes.post("/recipient", isAuth, async (req, res) => {
       accountNumber,
       bankCode,
     };
+    user.recipientCode = response.data.data.recipient_code;
     await user.save();
     res.json(response.data);
   } catch (error) {

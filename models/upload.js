@@ -25,6 +25,16 @@ const UploadSchema = new Schema(
         required: true,
       },
     ],
+    files: [
+      {
+        type: String,
+        required: true,
+      },
+    ],
+    zipUrl: {
+      type: String,
+      required: true,
+    },
     solution: [
       {
         type: String,

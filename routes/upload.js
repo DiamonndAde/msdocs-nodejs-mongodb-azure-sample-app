@@ -6,7 +6,10 @@ const { isAuth } = require("../middleware/is-auth");
 const { UserModel } = require("../models/user");
 const fileUploadMiddleware = require("../middleware/multer");
 const fs = require("fs");
+const JSZip = require("jszip");
 const path = require("path");
+const { uploads } = require("../utils/cloudinary");
+
 const archiver = require("archiver");
 
 const routes = Router();
@@ -125,34 +128,84 @@ routes.get("/:id/solution", isAuth, async (req, res) => {
   }
 });
 
-routes.get("/download/:id", async (req, res) => {
-  const { id } = req.params;
+routes.get("/:id/download", async (req, res) => {
   try {
-    const upload = await UploadModel.findById(id);
+    const upload = await UploadModel.findById(req.params.id);
     if (!upload) {
-      return res.status(404).send("File not found");
+      return res.status(404).json({ error: "Upload not found." });
     }
-    const archive = archiver("zip");
-    archive.on("error", (err) => {
-      console.error(err);
-      res.status(500).send("Internal Server Error");
+
+    const files = upload.files;
+    const fileUrls = files.map((file) => file.url);
+
+    const zip = new JSZip();
+    const folderName = `Uploaded Files - ${upload.title}`;
+    const folder = zip.folder(folderName);
+
+    // Add files to the zip folder
+    for (let i = 0; i < fileUrls.length; i++) {
+      const response = await axios.get(fileUrls[i], {
+        responseType: "arraybuffer",
+      });
+
+      folder.file(files[i].filename, response.data, { binary: true });
+    }
+
+    // Generate the zip file
+    const content = await zip.generateAsync({ type: "nodebuffer" });
+
+    // Set the headers for the download
+    res.set({
+      "Content-Disposition": `attachment; filename=${folderName}.zip`,
+      "Content-Type": "application/zip",
     });
-    const fileCount = upload.file.length;
-    for (let i = 0; i < fileCount; i++) {
-      const fileName = upload.file[i];
-      const filePath = path.join(__dirname, "..", "uploads", fileName);
-      if (fs.existsSync(filePath)) {
-        archive.file(filePath, { name: `${i + 1}.pdf` });
-      } else {
-        console.warn(`File not found: ${filePath}`);
-      }
-    }
-    archive.finalize();
-    res.attachment(`files.zip`);
-    archive.pipe(res);
+
+    // Send the zip file to the client
+    res.send(content);
   } catch (error) {
     console.error(error);
-    res.status(500).send(error.message);
+    return res.status(500).json({ error: "Sorry, something went wrong :/" });
+  }
+});
+
+// Download solution files
+routes.get("/solutions/:id/download", async (req, res) => {
+  try {
+    const upload = await UploadModel.findById(req.params.id);
+    if (!upload) {
+      return res.status(404).json({ error: "Upload not found." });
+    }
+
+    const files = upload.solution;
+    const fileUrls = files.map((file) => file.url);
+
+    const zip = new JSZip();
+    const folderName = `Solution Files - ${upload.title}`;
+    const folder = zip.folder(folderName);
+
+    // Add files to the zip folder
+    for (let i = 0; i < fileUrls.length; i++) {
+      const response = await axios.get(fileUrls[i], {
+        responseType: "arraybuffer",
+      });
+
+      folder.file(files[i], response.data, { binary: true });
+    }
+
+    // Generate the zip file
+    const content = await zip.generateAsync({ type: "nodebuffer" });
+
+    // Set the headers for the download
+    res.set({
+      "Content-Disposition": `attachment; filename=${folderName}.zip`,
+      "Content-Type": "application/zip",
+    });
+
+    // Send the zip file to the client
+    res.send(content);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Sorry, something went wrong :/" });
   }
 });
 
@@ -182,14 +235,30 @@ routes.post(
       const upload = req.body;
       upload.creator = req.id;
       upload.file = req.files.map((file) => file.originalname);
-      let creator;
 
-      const newUpload = await UploadModel.create(upload);
+      // Upload files to Cloudinary
+      const uploadedFiles = await Promise.all(
+        req.files.map((file) => uploads(file.path, "uploads"))
+      );
 
-      creator = user;
+      // Generate download URL for the zip file
+      const fileUrls = uploadedFiles
+        .map((file) => file.url)
+        .filter((url) => url.endsWith(".pdf"));
+      const zipUrl = await uploads(fileUrls, "uploads");
+
+      // Create new upload record in the database
+      const newUpload = await UploadModel.create({
+        ...upload,
+        files: uploadedFiles.map((file) => file.public_id),
+        zipUrl: zipUrl.url,
+      });
+
+      // Add the new upload to the user's uploads array
       user.uploads.push(newUpload);
       await user.save();
-      return res.status(201).json({ upload: newUpload, creator });
+
+      return res.status(201).json({ upload: newUpload });
     } catch (error) {
       console.error(error);
       return res
@@ -223,9 +292,28 @@ routes.patch(
           .json({ error: "Please upload one or more files" });
       }
 
-      upload.solution = req.files.map((file) => file.originalname);
+      // Create a zip file containing all the uploaded files
+      const zipName = `${upload.title}_solution.zip`;
+      const output = fs.createWriteStream(zipName);
+      const archive = archiver("zip", { zlib: { level: 9 } });
+      archive.pipe(output);
+      req.files.forEach((file) => {
+        archive.append(fs.createReadStream(file.path), {
+          name: file.originalname,
+        });
+      });
+      await archive.finalize();
+
+      // Upload the zip file to Cloudinary
+      const result = await uploads(zipName, "solutions");
+
+      // Save the download URL in the solution field of the UploadModel
+      upload.solution = result.url;
       upload.status = "submitted";
       await upload.save();
+
+      // Delete the zip file from the server
+      fs.unlinkSync(zipName);
 
       res.json({ message: "Solution posted successfully." });
     } catch (error) {

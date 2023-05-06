@@ -46,19 +46,19 @@ const UserSchema = new Schema(
     recipient: {
       type: {
         type: String,
-        required: true,
+        default: null,
       },
       name: {
         type: String,
-        required: true,
+        default: null,
       },
       accountNumber: {
         type: String,
-        required: true,
+        default: null,
       },
       bankCode: {
         type: String,
-        required: true,
+        default: null,
       },
     },
     recipientCode: {

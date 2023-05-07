@@ -49,6 +49,8 @@ async function getApp() {
     })
   );
 
+  app.options("*", cors());
+
   app.locals.format = format;
 
   app.get("/", async (req, res) => {

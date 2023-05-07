@@ -46,8 +46,8 @@ async function getApp() {
     cors({
       origin: [
         "http://localhost:3000",
-        "https://solutionners.com/",
-        "https://portal.solutionners.com/",
+        "https://solutionners.com",
+        "https://portal.solutionners.com",
       ],
       credentials: true,
     })

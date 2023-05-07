@@ -44,7 +44,11 @@ async function getApp() {
 
   app.use(
     cors({
-      origin: ["http://localhost:3000", "http://www.solutionners.com/"],
+      origin: [
+        "http://localhost:3000",
+        "https://solutionners.com/",
+        "https://portal.solutionners.com/",
+      ],
       credentials: true,
     })
   );

@@ -28,5 +28,6 @@ module.exports.isAuth = async (req, res, next) => {
     return;
   }
   req.id = decodedToken.id;
+  req.isAdmin = decodedToken.isAdmin;
   next();
 };

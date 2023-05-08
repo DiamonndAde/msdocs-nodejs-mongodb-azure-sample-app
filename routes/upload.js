@@ -424,7 +424,7 @@ routes.delete("/:id", isAuth, async (req, res) => {
     if (!post) {
       return res.status(404).json({ error: "Upload not found" });
     }
-    if (post.creator.toString() !== req.id) {
+    if (post.creator.toString() !== req.id && !req.isAdmin) {
       return res.status(401).json({ error: "Unauthorized" });
     }
     const upload = await UploadModel.findByIdAndDelete(req.params.id).exec();

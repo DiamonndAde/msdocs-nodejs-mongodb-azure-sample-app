@@ -6,7 +6,7 @@ const { isAuth } = require("../middleware/is-auth");
 const { UserModel } = require("../models/user");
 const { sendMail } = require("../middleware/email");
 const { UploadModel } = require("../models/upload");
-const paystackVerification = require("../middleware/paystackVerication");
+const marasoftpayVerification = require("../middleware/marasoftPayVerication");
 const fileUploadMiddleware = require("../middleware/multer");
 const axios = require("axios");
 require("dotenv").config();
@@ -14,6 +14,19 @@ require("dotenv").config();
 const paystack = require("paystack")(process.env.PAYSTACK_SECRET_KEY);
 
 const routes = Router();
+
+function generateUniqueTransactionRef() {
+  // Generate a timestamp-based unique identifier
+  const timestamp = Date.now().toString();
+
+  // Generate a random alphanumeric string as a suffix
+  const randomString = Math.random().toString(36).substring(2, 8);
+
+  // Concatenate the timestamp and random string to form the unique transaction reference
+  const transactionRef = `ref_${timestamp}_${randomString}`;
+
+  return transactionRef;
+}
 
 routes.get("/", isAuth, async (req, res) => {
   try {
@@ -29,6 +42,64 @@ routes.get("/", isAuth, async (req, res) => {
     });
   }
 });
+
+routes.post(
+  "/initiate_transaction",
+  isAuth,
+  [
+    body("amount").isNumeric().withMessage("Amount must be a number"),
+    body("name").isString().isLength({ min: 2 }),
+    body("email_address").isEmail(),
+    body("phone_number").isString().isLength({ min: 2 }),
+    body("currency").isString().isLength({ min: 2 }),
+    body("description").isString().isLength({ min: 2 }),
+  ],
+  async (req, res) => {
+    try {
+      const payload = {
+        data: {
+          enc_key: process.env.MSFT_ENC_KEY,
+          request_type: "test",
+          merchant_tx_ref: generateUniqueTransactionRef(), // Generate a unique transaction reference
+          redirect_url: "https://google.com",
+          name: req.body.name,
+          email_address: req.body.email_address,
+          phone_number: req.body.phone_number,
+          amount: req.body.amount.toString(),
+          currency: req.body.currency,
+          user_bear_charge: "no",
+          preferred_payment_option: "ussd",
+          description: req.body.description,
+        },
+      };
+
+      const options = {
+        url: "https://checkout.marasoftpay.live/initiate_transaction",
+        method: "POST",
+        headers: {},
+        data: payload,
+      };
+
+      const response = await axios(options);
+
+      if (response.status === 200 && response.data.status === "success") {
+        // Payment initiation successful
+        const paymentUrl = response.data.url;
+        return res.json({ paymentUrl });
+      } else {
+        // Payment initiation failed
+        console.error(response.data);
+        return res.status(400).json({ message: "Payment initiation failed" });
+      }
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({
+        error: "Sorry, something went wrong :/",
+        message: "Error processing payment",
+      });
+    }
+  }
+);
 
 routes.post(
   "/",
@@ -56,9 +127,9 @@ routes.post(
 
       const uploader = upload.creator;
 
-      // Verify the authenticity of the payment using Paystack API
-      const verification = await paystackVerification(req.body.reference);
-      if (!verification.status) {
+      // Verify the authenticity of the payment using Marasoftpay API
+      const verification = await marasoftpayVerification(req.body.reference);
+      if (verification.status !== "true") {
         return res.status(400).json({ message: "Payment verification failed" });
       }
 
@@ -106,7 +177,6 @@ routes.post(
     }
   }
 );
-
 routes.post(
   "/student-upload",
   fileUploadMiddleware().array("file", 10),
@@ -131,10 +201,10 @@ routes.post(
         return res.status(404).json({ error: "User not found" });
       }
 
-      // Verify the authenticity of the payment using Paystack API
+      // Verify the authenticity of the payment using Marasoftpay API
       let verification;
       try {
-        verification = await paystackVerification(req.body.reference);
+        verification = await marasoftpayVerification(req.body.reference);
       } catch (error) {
         console.error(error);
         return res.status(500).json({
@@ -202,19 +272,14 @@ routes.post("/verify", isAuth, async (req, res) => {
     }
     const { reference } = req.body;
 
-    const response = await axios.get(
-      `https://api.paystack.co/transaction/verify/${reference}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-        },
-      }
-    );
+    const marasoftpayResponse = await marasoftpayVerification(reference);
 
-    if (response.data.status === "success") {
-      return res.json(response);
+    if (marasoftpayResponse.status === "true") {
+      return res.json(marasoftpayResponse);
     } else {
-      return res.status(400).json({ message: "Payment failed", response });
+      return res
+        .status(400)
+        .json({ message: "Payment failed", response: marasoftpayResponse });
     }
   } catch (error) {
     console.error(error);

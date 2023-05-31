@@ -9,16 +9,19 @@ const routes = Router();
 routes.get("/", async (req, res) => {
   try {
     const { name } = req.query;
-    const url = "https://api.paystack.co/bank";
+    const url = "https://api.marasoftpay.live/getbanks";
+    const data = `enc_key=${process.env.MSFT_ENC_KEY}`;
     const headers = {
-      Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+      "Content-Type": "application/x-www-form-urlencoded",
     };
-    const response = await axios.get(url, { headers });
 
-    let banks = response.data.data;
+    const response = await axios.post(url, data, { headers });
+
+    let banks = response.data.data.banks;
+
     if (name) {
-      const searchRegex = new RegExp(`.*${name.split("").join(".*")}.*`, "i");
-      banks = banks.filter((bank) => searchRegex.test(bank.name));
+      const searchRegex = new RegExp(`^${name}`, "i");
+      banks = banks.filter((bank) => searchRegex.test(bank.bank_name));
     }
 
     res.json(banks);

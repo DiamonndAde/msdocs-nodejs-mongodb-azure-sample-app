@@ -567,7 +567,7 @@ routes.post("/reset-password/:token", async (req, res) => {
   }
 });
 
-router.delete("/:id", isAuth, async (req, res) => {
+routes.delete("/:id", isAuth, async (req, res) => {
   try {
     const user = await UserModel.findById(req.params.id).exec();
     if (!user) {

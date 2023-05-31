@@ -93,6 +93,25 @@ routes.get("/clients", isAuth, async (req, res) => {
   }
 });
 
+routes.get("/admin", isAuth, async (req, res) => {
+  try {
+    const adminUsers = await UserModel.find({ user: "admin" });
+
+    if (!adminUsers) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+    const adminIds = adminUsers.map((user) => user._id);
+
+    const uploads = await UploadModel.find({ creator: { $in: adminIds } });
+    res.json(uploads);
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ error: "Sorry, something went wrong :/" }, error.message);
+  }
+});
+
 routes.get("/:id", isAuth, async (req, res) => {
   try {
     const upload = await UploadModel.findById(req.params.id).exec();

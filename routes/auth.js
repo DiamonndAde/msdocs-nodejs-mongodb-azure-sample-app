@@ -367,7 +367,6 @@ routes.post(
       const newUser = await UserModel.create({
         ...user,
         referralCode: generateReferralCode(),
-        isAdmin: req.body.user == "admin" ? true : false,
       });
 
       const salt = await bcrypt.genSalt(10);
@@ -427,7 +426,6 @@ routes.post(
         lastName: user.lastName,
         email: user.email,
         department: user.department,
-        isAdmin: user.isAdmin,
       };
 
       jwt.sign(

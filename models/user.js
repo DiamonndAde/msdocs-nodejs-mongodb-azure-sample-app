@@ -7,10 +7,6 @@ const UserSchema = new Schema(
       type: String,
       required: true,
     },
-    isAdmin: {
-      type: Boolean,
-      default: false,
-    },
     referralCode: {
       type: String,
       unique: true,
